@@ -131,3 +131,19 @@ test("popup navigation skips disabled actions and dialog cancellation does not m
   assert.equal(r.calls.at(-1).command, "closeOverlay");
   assert.deepEqual((await fs.readdir(r.dir)).sort(), ["home"]);
 });
+
+test("double click opens a file in the default app; a single click still previews", async t => {
+  const r = await runtime(t), { default: Files } = await r.load("main.js");
+  const file = path.join(r.dir, "note.txt"); await fs.writeFile(file, "hi");
+  const panel = new Files(); panel.init({}, r.cx); await r.drain();
+  const row = () => find(panel.render(r.cx), `file-${file}`);
+  row().handlers.on_click({ click_count: 1 }, r.cx); await r.drain();
+  assert.equal(panel.file, file);
+  panel.show(null, r.cx); await r.drain();
+  const node = row();
+  node.handlers.on_click({ click_count: 1 }, r.cx);
+  node.handlers.on_click({ click_count: 2 }, r.cx);
+  await r.drain();
+  assert.equal(panel.file, null);
+  assert.deepEqual([r.calls.at(-1).command, r.calls.at(-1).args], ["open", [file]]);
+});

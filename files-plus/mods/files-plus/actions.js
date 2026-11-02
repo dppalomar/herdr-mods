@@ -130,6 +130,14 @@ export async function trashEntry(target) {
   else await checked("rm", ["-rf", "--", target.path], target.on);
   changed();
 }
+export async function openDefault(target) {
+  ensureTarget(target);
+  if (target.on !== null) throw new Error("Opening in the default app is only available for local files");
+  const platform = window().platform;
+  if (platform === "macos") await checked("open", [target.path], null);
+  else if (platform === "windows") await checked("cmd", ["/c", "start", "", target.path], null);
+  else await checked("xdg-open", [target.path], null);
+}
 export async function reveal(target) {
   ensureTarget(target);
   if (target.on !== null) throw new Error("Reveal is only available for local files");
@@ -148,6 +156,7 @@ export function menuItems(target) {
     { id: "path", label: "Copy path", enabled: true },
     { id: "relative", label: "Copy relative path", enabled: true },
     { id: "reveal", label: window().platform === "macos" ? "Reveal in Finder" : window().platform === "windows" ? "Reveal in File Explorer" : "Reveal in file manager", enabled: target.on === null },
+    { id: "open", label: "Open with Default App", enabled: target.on === null && target.kind !== "root" },
     { id: "new-file", label: "New file…", enabled: true, group: true },
     { id: "new-folder", label: "New folder…", enabled: true },
     { id: "rename", label: "Rename…", enabled: !root },

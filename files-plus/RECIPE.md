@@ -1,6 +1,6 @@
 # Files Plus
 
-Browse a single folder or every folder in a Multi-Roots workspace in the Files panel. Right-click an entry to insert an agent reference, copy it, paste it, copy a path, reveal it, or create, rename and remove files. A persistent + adds a workspace folder. Text and Markdown open as read-only source in the same panel, with a back button.
+Browse a single folder or every folder in a Multi-Roots workspace in the Files panel. Right-click an entry to insert an agent reference, copy it, paste it, copy a path, reveal it, open it with the default app, or create, rename and remove files. Double-clicking a file opens it in the default app; a single click previews it. A persistent + adds a workspace folder. Text and Markdown open as read-only source in the same panel, with a back button.
 
 ![Files Plus](preview.png)
 
@@ -24,6 +24,7 @@ Right-click captures the entry, owning root, machine and active terminal before 
 - Copy uses an internal shared clipboard. Paste targets the clicked directory or a file's parent, requires the same machine, and chooses `name copy.ext`, `name copy 2.ext`, or the corresponding folder name when needed. Existing files are not overwritten. Reject directory cycles, including a local/POSIX symlink alias into the source directory. Copy symlinks as links.
 - Copy path copies the absolute path. Copy relative path always uses the owning root and yields `.` for a root row.
 - Reveal uses Finder, File Explorer or the local Linux file manager. Remote reveal is disabled.
+- Double click opens a file in the OS default app (`open`, `xdg-open`, `cmd /c start`); a single click still previews, delayed by 220 ms so a double click wins and cancels the pending preview. Open with Default App in the pointer menu does the same for a file or folder. Both are local-only: remote entries and workspace roots are refused.
 - New file and New folder prompt for a name inside the clicked directory or file's parent. Reject blank names, `.`/`..`, separators, control characters and existing entries. Rename is prefilled and stays in the same parent. Workspace roots cannot be renamed or deleted from this menu.
 - Move to Trash asks for confirmation. Local macOS entries move to `~/.Trash` with collision-safe naming. Other platforms and remote machines display an explicit permanent-deletion confirmation. A failure stays in the dialog.
 - A workspace root also offers New terminal or agent here and Remove from workspace. If `multi-root` is installed, open its launch menu with the captured space/root; otherwise start a terminal in that root. Removing a root keeps files on disk and requires at least one root to remain.
@@ -114,7 +115,7 @@ Use `cx.spawn` for slow work. Create focus handles, inputs and editors in `init`
 
 ### Dependencies and access
 
-POSIX operations use `sh`, `cp`, `mkdir`, `mv` and, after explicit confirmation outside local macOS Trash, `rm`. Git marks use Git with `--no-optional-locks -c core.fsmonitor=false -c diff.autoRefreshIndex=false`. Windows retains PowerShell folder listing and file commands. Reveal uses `open -R`, `explorer.exe /select,…` or `xdg-open`. These programs receive paths as arguments, not interpolated shell source.
+POSIX operations use `sh`, `cp`, `mkdir`, `mv` and, after explicit confirmation outside local macOS Trash, `rm`. Git marks use Git with `--no-optional-locks -c core.fsmonitor=false -c diff.autoRefreshIndex=false`. Windows retains PowerShell folder listing, file commands and `cmd /c start`. Reveal uses `open -R`, `explorer.exe /select,…` or `xdg-open`; Open with Default App uses `open`, `cmd /c start` or `xdg-open`. These programs receive paths as arguments, not interpolated shell source.
 
 The mod reads workspace directories and text files, writes only requested filesystem mutations and workspace-config updates, and reads optional mods' `mod.json` to detect their presence. Local macOS Trash uses the person's `~/.Trash`. Remote filesystem calls carry the captured `on` machine. No service credentials, network services, Node.js, DOM or `setTimeout` are used by the runtime. Node.js 22+ and Python 3 are development/test dependencies only.
 
@@ -165,5 +166,6 @@ Build and exercise these observable behaviors using disposable folders:
 8. Root actions retain one root, leave removed roots' files intact, and launch a terminal in the requested root. When Multi-Roots is installed, its agent menu receives the captured root and space.
 9. With a compatible Preview Plus receiver and stack, rich targets switch the panel and Back restores the existing tree. Ordinary text stays in the source editor. Missing receivers fall back to source; stale requests cannot replace a later selection. Rich rendering itself belongs to Preview Plus.
 10. `herdr-app status` reports no mod or layout errors. Capture the running panel with `herdr-app shot preview.png`. Use disposable content and retain the native PNG color metadata. Ship this folder without a `layouts/` directory or unused key bindings.
+11. Double click a file opens it in the default app; a single click still previews. Open with Default App in the pointer menu works for files and folders, and both are disabled for remote entries and workspace roots.
 
 The committed package also includes automated and isolated native test drivers. Their commands are in [README.md](README.md); they are development tools, not runtime dependencies. Actual results and remaining platform/manual checks are in the [implementation plan](../docs/plans/files-plus.md#implementation-and-acceptance).

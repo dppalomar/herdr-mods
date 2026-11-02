@@ -5,7 +5,7 @@ import { FilesPanel } from "./workspace.js";
 import { prune, basename, relativePath } from "./roots.js";
 import { workspaceSnapshot, changeRoots } from "./config.js";
 import { palette } from "./palette.js";
-import { CLIPBOARD, menuItems, ensureTarget, insertReference, paste, createEntry, renameEntry, trashEntry, reveal, installed, changed } from "./actions.js";
+import { CLIPBOARD, menuItems, ensureTarget, insertReference, paste, createEntry, renameEntry, trashEntry, reveal, openDefault, installed, changed } from "./actions.js";
 
 const TITLES = { "new-file": "New file", "new-folder": "New folder", rename: "Rename", trash: "Move to Trash", "add-root": "Add folder to workspace", "remove-root": "Remove from workspace" };
 const NAME_ACTIONS = new Set(["new-file", "new-folder", "rename"]);
@@ -58,6 +58,7 @@ export default class FilesPlus extends FilesPanel {
         else if (item.id === "path") cx.write_to_clipboard(target.path);
         else if (item.id === "relative") cx.write_to_clipboard(relativePath(target.root, target.path));
         else if (item.id === "reveal") await reveal(target);
+        else if (item.id === "open") await openDefault(target);
         else if (item.id === "new-here") {
           const hasMultiRoot = await installed("multi-root");
           ensureTarget(target);

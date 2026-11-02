@@ -3,7 +3,7 @@ import { View, div, svg } from "gpui-kit";
 import { v_flex, h_flex, Editor, EditorState } from "gpui-base";
 import { spaces, panes, focused, exec, readTextFile, watchFolder, settings, window, props, shared, setShared, run, openOverlay } from "herdr";
 import { workspaceOf, describeRoots, reloadWorkspace, dirname, joinPath, label, shortPath, rootOf, relativePath, contains, READ } from "./roots.js";
-import { captureTarget, installed, REVISION } from "./actions.js";
+import { captureTarget, installed, REVISION, openDefault } from "./actions.js";
 import { palette } from "./palette.js";
 
 const PER_FOLDER = 500, TOTAL = 5000;
@@ -190,6 +190,11 @@ export class FilesPanel extends View {
     });
   }
   target(path, kind, root) { return captureTarget(this.spaceId, path, kind, root, this.on, this.rootInfo?.find(folder => folder.path === root)?.physical || root); }
+  openExternal(path, root, cx) {
+    const context = this.context;
+    openDefault(this.target(path, "file", root))
+      .catch(error => { if (this.current(context)) { this.error = error.message || String(error); cx.notify(); } });
+  }
   menu(path, kind, root, event, cx) {
     cx.stop_propagation();
     openOverlay({ mod: "files-plus", kind: "popup", width: 272, height: kind === "root" ? 428 : 360, at: event.position, props: { role: "menu", target: this.target(path, kind, root) } });
@@ -200,7 +205,19 @@ export class FilesPanel extends View {
       if (out.length >= TOTAL) break;
       const path = joinPath(prefix, entry.name), open = this.folders.has(path), mark = this.marks[path];
       out.push(h_flex().id(`file-${path}`).h(28).flex_none().pl(8 + depth * 18).pr(8).gap(7).items_center().rounded(4).cursor_pointer().hover(s => s.bg(t.hover))
-        .on_click((_event, cx) => entry.dir ? this.toggle(path, cx) : this.openFile(path, root, cx))
+        .on_click((event, cx) => {
+          if (entry.dir) { this.toggle(path, cx); return; }
+          // Single click: preview, after a beat so a double click wins.
+          // Double click: open in the default app.
+          const token = this.openToken = (this.openToken || 0) + 1;
+          if (event.click_count > 1) { this.openExternal(path, root, cx); return; }
+          const context = this.context;
+          cx.spawn(async cx => {
+            await cx.sleep(220);
+            if (this.openToken !== token || !this.current(context)) return;
+            this.openFile(path, root, cx);
+          });
+        })
         .on_mouse_down("right", (event, cx) => this.menu(path, entry.dir ? "dir" : "file", root, event, cx))
         .child(entry.dir ? svg(`mods/files-plus/chevron-${open ? "down" : "right"}.svg`).size(12).flex_none().text_color(t.muted) : div().w(12).flex_none())
         .child(svg(`mods/files-plus/${entry.dir ? "folder" : "file"}.svg`).size(14).flex_none().text_color(t.muted))

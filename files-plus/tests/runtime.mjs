@@ -35,7 +35,7 @@ export async function runtime(t) {
     exec: async (command, args = [], options = {}) => {
       state.calls.push({ command, args: [...args], ...options });
       if (state.hooks.exec) { const result = await state.hooks.exec(command, args, options); if (result) return result; }
-      if (["open", "xdg-open", "explorer.exe"].includes(command)) return { code: 0, stdout: "", stderr: "" };
+      if (["open", "xdg-open", "explorer.exe", "cmd"].includes(command)) return { code: 0, stdout: "", stderr: "" };
       try { const result = await execute(command, [...args], { cwd: options.cwd, maxBuffer: 8 * 1024 * 1024 }); return { code: 0, ...result }; }
       catch (error) { if (typeof error.code !== "number") throw error; return { code: error.code, stdout: error.stdout, stderr: error.stderr }; }
     },

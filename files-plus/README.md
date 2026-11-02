@@ -1,6 +1,6 @@
 # Files Plus
 
-Enhance the Files panel by combining single-folder and Multi-Roots workspace browsing with a complete right-click file manager menu (Add to agent `@`, Copy, Paste, Copy path, Copy relative path, Reveal in Finder/Explorer, and file/folder CRUD). Works standalone with built-in text previews, or pairs with [Preview Plus](../preview-plus/README.md) to replace the view when opening Markdown, images, and PDFs.
+Enhance the Files panel by combining single-folder and Multi-Roots workspace browsing with a complete right-click file manager menu (Add to agent `@`, Copy, Paste, Copy path, Copy relative path, Reveal in Finder/Explorer, Open with Default App, and file/folder CRUD). Double-clicking a file opens it in the default app; a single click previews it. Works standalone with built-in text previews, or pairs with [Preview Plus](../preview-plus/README.md) to replace the view when opening Markdown, images, and PDFs.
 
 ![Files Plus](preview.png)
 

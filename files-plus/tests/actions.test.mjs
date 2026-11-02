@@ -132,3 +132,19 @@ test("reveal uses platform-specific commands without shell interpolation", async
   r.platform = "windows"; await a.reveal(target);
   assert.equal(r.calls.at(-1).command, "explorer.exe");
 });
+
+test("open with default app is local-only and uses platform-specific commands", async t => {
+  const r = await runtime(t), a = await r.load("actions.js"), target = r.target("file name.pdf");
+  assert.equal(a.menuItems(target).find(i => i.id === "open").enabled, true);
+  assert.equal(a.menuItems(r.target("", "root")).find(i => i.id === "open").enabled, false);
+  await a.openDefault(target);
+  assert.deepEqual([r.calls.at(-1).command, r.calls.at(-1).args], ["open", [target.path]]);
+  r.platform = "linux"; await a.openDefault(target);
+  assert.equal(r.calls.at(-1).command, "xdg-open");
+  assert.deepEqual(r.calls.at(-1).args, [target.path]);
+  r.platform = "windows"; await a.openDefault(target);
+  assert.deepEqual([r.calls.at(-1).command, r.calls.at(-1).args], ["cmd", ["/c", "start", "", target.path]]);
+  target.on = "server"; r.spaces[0].machine = "server";
+  assert.equal(a.menuItems(target).find(i => i.id === "open").enabled, false);
+  await assert.rejects(a.openDefault(target), /local files/);
+});
