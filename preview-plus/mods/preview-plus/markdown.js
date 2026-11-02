@@ -1,5 +1,5 @@
 import { resolveLink, kind } from "./paths.js";
-import { loadMedia } from "./media.js";
+import { loadMedia, localCopy } from "./media.js";
 
 // Keep code examples byte-for-byte unchanged while rewriting image destinations.
 function withoutCode(text) {
@@ -64,7 +64,7 @@ export async function stageMarkdown(text, target) {
       const link = resolveLink(target.file, ref.href);
       if (!link.file || kind(link.file) !== "image") continue;
       files.add(link.file);
-      if (target.on) { unavailable = true; continue; }
+      if (target.on && !(await localCopy(link.file))) { unavailable = true; continue; }
       if (!staged.has(link.file)) staged.set(link.file, await loadMedia({ ...target, file: link.file }));
       if (ref.imageStart > cursor) blocks.push({ text: text.slice(cursor, ref.imageStart) });
       // Herdr 0.1.11's TextView omits image nodes, including data URIs.

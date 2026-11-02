@@ -62,7 +62,7 @@ herdr-app do pane.split '{"direction":"right","mod":"preview-plus","props":{"fil
 herdr-app do tab.new '{"name":"Document","mod":"preview-plus","props":{"file":"/absolute/path/guide.pdf"}}'
 ```
 
-Pass `on` with the machine name for remote Markdown and text. Images and PDFs are local-only. PDF rendering is macOS-only; the Open control can launch a local PDF in its system application on other platforms.
+Pass `on` with the machine name for remote Markdown and text. Previews and Open use this computer's copy at the same path when one exists, as with synced folders such as Dropbox; otherwise the panel says which machine holds the file. PDF rendering is macOS-only.
 
 ## Development checks
 

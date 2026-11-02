@@ -212,7 +212,7 @@ export default class PreviewPlus extends View {
         .when(type === "markdown", el => el
           .child(button("preview-formatted", "Preview", colors, cx => { this.source = false; cx.notify(); }, true, !this.source))
           .child(button("preview-source", "Source", colors, cx => { this.source = true; cx.notify(); }, true, this.source)))
-        .when(Boolean(file), el => el.child(button("preview-open", "Open", colors, cx => this.open(cx), !this.selected.on)))
+        .when(Boolean(file), el => el.child(button("preview-open", "Open", colors, cx => this.open(cx), true)))
         .when(!file, el => el.child(button("preview-refresh", "Refresh", colors, cx => this.reload(cx)))))
       .when(Boolean(file || this.owner.cwd), el => el.child(div().h(28).flex_none().px(16).flex().items_center().text_size(12).text_color(colors.muted).truncate().child(file ? dirname(file) : this.owner.cwd)))
       .when(media, el => el.child(h_flex().flex_none().min_h(36).px(8).gap(2).flex_wrap().items_center().border_b(0.5).border_color(colors.border)
@@ -226,7 +226,7 @@ export default class PreviewPlus extends View {
           .child(div().px(6).text_size(12).text_color(colors.muted).child(`${this.page} / ${this.total || "…"}`))
           .child(button("preview-next", "Next", colors, cx => this.turnPage(1, cx), this.page < this.total)))))
       .when(Boolean(this.actionError), el => el.child(div().px(16).py(8).text_size(12).text_color(colors.red).child(this.actionError)))
-      .when(Boolean(this.imageWarning && !this.source), el => el.child(div().px(16).py(8).text_size(12).text_color(colors.muted).child(this.selected?.on ? "Inline images are only available for local files." : "Some inline images could not be loaded.")))
+      .when(Boolean(this.imageWarning && !this.source), el => el.child(div().px(16).py(8).text_size(12).text_color(colors.muted).child("Some inline images are not available on this computer.")))
       .when(!file && Boolean(this.tree), el => el.child(this.tree.render(colors, (value, cx) => this.show(value, cx))))
       .when(!file && !this.tree, el => el.child(div().p(16).text_size(12).text_color(colors.muted).child(this.owner.mode === "pane" ? "Pass an absolute file path to Preview Plus." : "Select a file in Files Plus.")))
       .when(Boolean(file), el => el.child(this.body(type, colors)));

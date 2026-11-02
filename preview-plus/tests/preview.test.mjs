@@ -145,14 +145,50 @@ test("watched source and Markdown image updates reload, unrelated files do not",
   await fs.rm(state.props.file); await state.change(state.dir, [state.props.file]); assert.match(panel.error, /no longer available/);
 });
 
-test("remote text retains its machine; remote media explains the unsupported state", async t => {
+test("remote text retains its machine; remote media without a local copy says which machine holds it", async t => {
   const state = await runtime(t); state.props = { file: "/remote/start.md", on: "server" };
   let options;
   state.hooks.read = async (_file, value) => { options = value; return "# Remote\n\n![image](photo.png)"; };
   const panel = await state.start(); assert.equal(options.on, "server"); assert.equal(panel.imageWarning, true);
-  panel.follow("photo.png", state.cx); await state.settle(); assert.equal(panel.selected.on, "server"); assert.match(panel.error, /only available for local/);
+  panel.follow("photo.png", state.cx); await state.settle(); assert.equal(panel.selected.on, "server"); assert.match(panel.error, /only on server/);
   assert.equal(state.calls.filter(call => call.command === "osascript").length, 0);
-  assert.equal(find(state.render(), "preview-open").handlers.on_click, undefined);
+  assert.equal(typeof find(state.render(), "preview-open").handlers.on_click, "function");
+});
+
+test("media and Open use a local copy at the same path for a space on another machine", async t => {
+  const state = await runtime(t); await fixtures(state.dir);
+  const { loadMedia, openFile } = await state.load("media.js");
+  const file = path.join(state.dir, "landscape.png");
+  const media = await loadMedia({ file, on: "server" });
+  assert.equal(media.width, 640); assert.equal(media.height, 400);
+  state.hooks.exec = async command => command === "open" ? { code: 0, stdout: "", stderr: "" } : undefined;
+  await openFile({ file, on: "server" });
+  assert.ok(state.calls.some(call => call.command === "open" && call.args[0] === file));
+});
+
+test("missing local copies are named instead of previewed", async t => {
+  const state = await runtime(t);
+  const { loadMedia, openFile } = await state.load("media.js");
+  await assert.rejects(loadMedia({ file: "/remote/photo.png", on: "server" }), /only on server/);
+  await assert.rejects(openFile({ file: "/remote/photo.png", on: "server" }), /only on server/);
+});
+
+test("Windows keeps refusing remote media", async t => {
+  const state = await runtime(t); state.platform = "windows";
+  const { loadMedia } = await state.load("media.js");
+  await assert.rejects(loadMedia({ file: "/remote/photo.png", on: "server" }), /only on server/);
+});
+
+test("Markdown images in a space on another machine use a local copy when there is one", async t => {
+  const state = await runtime(t); await fixtures(state.dir);
+  const { stageMarkdown } = await state.load("markdown.js");
+  const document = { file: path.join(state.dir, "README.md"), on: "server" };
+  const present = await stageMarkdown("![Landscape](landscape.png)\n", document);
+  assert.equal(present.unavailable, false);
+  assert.equal(present.blocks.filter(block => block.media).length, 1);
+  const missing = await stageMarkdown("![Photo](photo.png)\n", document);
+  assert.equal(missing.unavailable, true);
+  assert.equal(missing.blocks.filter(block => block.media).length, 0);
 });
 
 test("native physical-path events refresh a source opened through a symlink alias", async t => {

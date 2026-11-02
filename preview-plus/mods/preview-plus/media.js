@@ -112,8 +112,16 @@ if not os.path.exists(destination):
 print(json.dumps(dict(path='mods/preview-plus/.cache/' + name, width=width, height=height, pages=1, page=1, signature=signature)))
 `;
 
+// A space can be on another machine. The same path often exists here too, because
+// synced folders such as Dropbox keep identical paths on every computer, so use
+// the local copy when it is there. Only POSIX is checked: Windows keeps refusing,
+// as it did before.
+export async function localCopy(path) {
+  if (window()?.platform === "windows") return false;
+  try { return (await exec("sh", ["-c", 'test -e "$1"', "local", path], { on: null })).code === 0; } catch { return false; }
+}
 export async function loadMedia(target, page = 1, type = "image") {
-  if (target.on) throw new Error("Image and PDF previews are only available for local files.");
+  if (target.on && !(await localCopy(target.file))) throw new Error(`This file is only on ${target.on}: this computer has no copy at that path.`);
   const platform = window()?.platform;
   if (type === "pdf" && platform !== "macos") throw new Error("PDF previews require macOS and PDFKit. Use Open to view this file.");
   const cache = `${appHome()}/mods/preview-plus/.cache`;
@@ -127,7 +135,7 @@ export async function loadMedia(target, page = 1, type = "image") {
 }
 
 export async function openFile(target) {
-  if (target.on) throw new Error("Open is only available for local files.");
+  if (target.on && !(await localCopy(target.file))) throw new Error(`This file is only on ${target.on}: this computer has no copy to open.`);
   const platform = window()?.platform;
   const command = platform === "macos" ? "open" : platform === "windows" ? "explorer.exe" : "xdg-open";
   const result = await exec(command, [target.file]);
